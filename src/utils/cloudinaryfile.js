@@ -25,7 +25,7 @@ const uploadOnCloudinary = async (imagePath) => {
     const result = await cloudinary.uploader.upload(imagePath, options);
 
     console.log("file uploaded sucssfully", result);
-    return result.public_id;
+    return result;
   } catch (error) {
     console.error(error);
   }
