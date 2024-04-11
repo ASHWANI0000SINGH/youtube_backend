@@ -1,5 +1,6 @@
 import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinaryfile.js";
+import bcrypt from "bcrypt";
 
 const registerUser = async (req, res) => {
   try {
@@ -18,34 +19,40 @@ const registerUser = async (req, res) => {
     const existedUser = await User.findOne({
       $or: [{ username }, { email }],
     });
-    console.log(existedUser);
     if (existedUser) {
       res.status(401).send("User already registered");
     }
-
-    // console.log("req.files", req.files.avatar[0].path);
-    // console.log("req.files", req.files.coverImage[0].path);
 
     let avatarLocalpath = req.files?.avatar[0]?.path;
     let coverImageLocalpath = req.files?.coverImage[0]?.path;
 
     const avatar = await uploadOnCloudinary(avatarLocalpath);
     const coverImage = await uploadOnCloudinary(coverImageLocalpath);
-    console.log("avatar on cloudinary", avatar);
-    console.log("coverimage on cloudinary", coverImage);
     if (!avatar) return;
+
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await User.create({
       username,
       email,
       fullName,
-      password,
+      password: hashedPassword,
       avatar: avatar.url,
       coverImage: coverImage ? coverImage.url : "",
     });
+    const createdUser = await User.findById(user._id).select(
+      "-password -refreshToken"
+    );
+    if (!createdUser) {
+      throw new ApiError(
+        500,
+        "Something went wrong while registering the user"
+      );
+    }
 
-    console.log("ok user");
-    res.status(200).send({ user: user, message: "succefully created user" });
+    res
+      .status(200)
+      .send({ user: createdUser, message: "succefully created user" });
   } catch (error) {
     console.error("Error while creating the user:", error);
     return res.status(500).send("Internal Server Error while creating user");
