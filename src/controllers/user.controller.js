@@ -277,7 +277,6 @@ const updateAccoutDetails = async (req, res) => {
       .send({ data: user, message: "details modified succesfully" });
   } catch (error) {}
 };
-
 const updateUserAvatar = async (req, res) => {
   // get the avatar
   //update the avatar
@@ -336,6 +335,140 @@ const updateCoverImage = async (req, res) => {
     console.log("server error while updating the cover image", error);
   }
 };
+const getUserChannelProfile = async (req, res) => {
+  try {
+    const username = req.params;
+
+    if (!username) {
+      res.status(401).send({ data: null, mesaage: "username not given" });
+    }
+    console.log("username", username.username);
+    const channel = await User.aggregate([
+      {
+        $match: {
+          username: username.username?.toLowerCase(),
+        },
+      },
+      {
+        $lookup: {
+          from: "subscriptions",
+          localField: "_id",
+          foreignField: "channel",
+          as: "subscribers",
+        },
+      },
+      {
+        $lookup: {
+          from: "subscriptions",
+          localField: "_id",
+          foreignField: "subscriber",
+          as: "subscribedTo",
+        },
+      },
+      {
+        $addFields: {
+          subscribersCount: {
+            $size: "$subscribers",
+          },
+          channelsSubscribedToCount: {
+            $size: "$subscribedTo",
+          },
+          isSubscribed: {
+            $cond: {
+              if: { $in: [req.user?._id, "$subscribers.subscriber"] },
+              then: true,
+              else: false,
+            },
+          },
+        },
+      },
+      {
+        $project: {
+          fullName: 1,
+          username: 1,
+          myname: 1,
+          subscribersCount: 1,
+          channelsSubscribedToCount: 1,
+          isSubscribed: 1,
+          avatar: 1,
+          coverImage: 1,
+          email: 1,
+        },
+      },
+    ]);
+    if (!channel?.length) {
+      return res.status(402).send({ message: "channel not available" });
+    }
+    return res
+      .status(200)
+      .send({ data: channel[0], message: "user channel profile" });
+
+    // const channel = console.log("user from channel", user);
+  } catch (error) {
+    res.status(400).send({
+      data: null,
+      message: "somewthing went wrong while getting user channel profile",
+    });
+  }
+};
+const getWatchHistory = async (req, res) => {
+  try {
+    // const user = req.user;
+    const user = await User.aggregate([
+      {
+        $match: {
+          _id: req.user._id,
+        },
+      },
+      {
+        $lookup: {
+          from: "videos",
+          localField: "watchHistory",
+          foreignField: "_id",
+          as: "watchHistory",
+          pipeline: [
+            {
+              $lookup: {
+                from: "users",
+                localField: "owner",
+                foreignField: "_id",
+                as: "owner",
+                pipeline: [
+                  {
+                    $project: {
+                      fullName: 1,
+                      username: 1,
+                      avatar: 1,
+                    },
+                  },
+                ],
+              },
+            },
+            {
+              $addFields: {
+                owner: {
+                  $first: "$owner",
+                },
+              },
+            },
+          ],
+        },
+      },
+    ]);
+    if (!user?.length) {
+      return res.staus(402).send({ mesaage: "user not available" });
+    }
+    console.log("wtach", user[0]?.watchHistory);
+    return res
+      .status(200)
+      .send({ data: user[0]?.watchHistory, message: "user watch history" });
+  } catch (error) {
+    res.status(404).send({
+      data: null,
+      message: "something went wrong while getting watch history",
+    });
+  }
+};
 export {
   registerUser,
   loginUser,
@@ -346,4 +479,6 @@ export {
   updateAccoutDetails,
   updateUserAvatar,
   updateCoverImage,
+  getUserChannelProfile,
+  getWatchHistory,
 };
