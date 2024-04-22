@@ -74,7 +74,6 @@ userSchema.methods.generateAccessToken = function () {
     process.env.ACCESS_TOKEN_SECRET,
     { expiresIn: process.env.ACCESS_TOKEN_EXPIRY }
   );
-  // return jwt.sign(username, process.env.TOKEN_SECRET, { expiresIn: "1800s" });
 };
 
 userSchema.methods.generateRefreshToken = function () {
