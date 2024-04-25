@@ -24,50 +24,61 @@ const registerUser = async (req, res) => {
     //5. delete password
     const { username, email, fullName, password } = req.body;
     if (!username || !email || !fullName || !password) {
-      res.status(400).send("please fill all mandatory details of the user");
+      res.status(400).json({
+        data: null,
+        message: "please fill all mandatory details of the user",
+      });
     }
+
     const existedUser = await User.findOne({
       $or: [{ username }, { email }],
     });
-    if (existedUser) {
-      res.status(401).send("User already registered");
-    }
 
+    if (existedUser) {
+      res.status(401).json({ data: null, message: "User already registered" });
+    }
+    console.log("working...43");
     let avatarLocalpath = req.files?.avatar[0]?.path;
     let coverImageLocalpath = req.files?.coverImage[0]?.path;
 
     const avatar = await uploadOnCloudinary(avatarLocalpath);
     const coverImage = await uploadOnCloudinary(coverImageLocalpath);
+    console.log("working 65", avatar, coverImage);
 
-    if (!avatar) return;
-
-    // const hashedPassword = await bcrypt.hash(password, 10);
+    if (!avatar) {
+      return res.status(403).json({
+        data: null,
+        message: "error while uploading avatar or cloudinary",
+      });
+    }
 
     const user = await User.create({
       username,
       email,
       fullName,
-      // password: hashedPassword,
       password,
-      avatar: avatar.url,
+      avatar: avatar?.url,
       coverImage: coverImage ? coverImage.url : "",
     });
     const createdUser = await User.findById(user._id).select(
       "-password -refreshToken"
     );
     if (!createdUser) {
-      throw new ApiError(
-        500,
-        "Something went wrong while registering the user"
-      );
+      return res.status(402).json({
+        data: null,
+        message: "Something went wrong while creating the user",
+      });
     }
 
-    return res
-      .status(200)
-      .send({ user: createdUser, message: "succefully created user" });
+    return res.status(200).json({
+      data: createdUser,
+      message: "succefully created user",
+    });
   } catch (error) {
-    console.error("Error while creating the user:", error);
-    return res.status(500).send("Internal Server Error while creating user");
+    return res.status(400).json({
+      data: null,
+      message: "Something went wrong while registering the user",
+    });
   }
 };
 const loginUser = async (req, res) => {
@@ -109,7 +120,10 @@ const loginUser = async (req, res) => {
       .status(200)
       .cookie(" accessToken", accessToken, options)
       .cookie("refreshToken", refreshToken, options)
-      .send({ user: loggedInUser, message: "succefully logged In " });
+      .send({
+        user: { loggedInUser, accessToken },
+        message: "succefully logged In ",
+      });
   } catch (error) {
     console.error("Error while login the user:", error);
     return res.status(500).send("Internal Server Error while Login user");

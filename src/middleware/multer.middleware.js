@@ -5,16 +5,10 @@ const storage = multer.diskStorage({
     cb(null, "./public/temp");
   },
   filename: function (req, file, cb) {
+    console.log("file from multer", file);
     cb(null, file.originalname);
   },
 });
-
-// let files = fs.readdirSync("./public/temp");
-// files.forEach((file) => {
-//   if (files.length > 0) {
-//     fs.unlinkSync(`./public/temp/${file}`);
-//   }
-// });
 
 export const upload = multer({
   storage,
