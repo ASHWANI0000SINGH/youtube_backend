@@ -11,6 +11,7 @@ const uploadVideo = async (req, res) => {
     const videoFileonCloudinary = await uploadOnCloudinary(videoLocalpath);
     console.log("file on cloudinary", videoFileonCloudinary);
     console.log("url  of file on cloudinary", videoFileonCloudinary.url);
+    console.log("video on cloudinary", videoFileonCloudinary);
 
     const video = await Video.create({
       thumbnail,
@@ -90,11 +91,6 @@ const fetchAllVideos = async (req, res) => {
     const allVideosForAllUsers = await Video.aggregate([
       {
         $lookup: {
-          // from: "videos",
-          // localField: "_id",
-          // foreignField: "owner",
-          // as: "videos",
-
           from: "users",
           localField: "owner",
           foreignField: "_id",
@@ -110,9 +106,6 @@ const fetchAllVideos = async (req, res) => {
                 pipeline: [
                   {
                     $project: {
-                      fullName: 1,
-                      username: 1,
-                      avatar: 1,
                       videoFile: 1,
                       thumbnail: 1,
                       title: 1,
@@ -122,25 +115,9 @@ const fetchAllVideos = async (req, res) => {
                 ],
               },
             },
-            {
-              $addFields: {
-                owner: {
-                  $first: "$videoowner",
-                },
-              },
-            },
           ],
         },
       },
-      // {
-      //   $project: {
-      //     _id: 1,
-      //     username: 1,
-      //     videos: 1,
-      //     avatar: 1,
-      //     coverImage: 1,
-      //   },
-      // },
     ]);
 
     console.log("All videos for all users:", allVideosForAllUsers);
@@ -153,4 +130,84 @@ const fetchAllVideos = async (req, res) => {
   }
 };
 
-export { uploadVideo, fetchVideos, fetchAllVideos };
+const fetchVideoById = async (req, res) => {
+  // *
+  // 1.get video id
+  // 2.hit a ququery with aggregate fn
+  // 3. send result with user
+  // *
+  // try {
+  //   const id = req.params;
+
+  //   if (!id) {
+  //     res.status(401).send({ data: null, mesaage: "id not given" });
+  //   }
+  //   console.log("id", id.id);
+  //   const video = await Video.aggregate([
+  //     {
+  //       $match: {
+  //         _id: id.id,
+  //       },
+  //     },
+  //     {
+  //       $lookup: {
+  //         from: "users",
+  //         localField: "owner",
+  //         foreignField: "_id",
+  //         as: "users",
+
+  //         pipeline: [
+  //           {
+  //             $lookup: {
+  //               from: "videos",
+  //               localField: "_id",
+  //               foreignField: "owner",
+  //               as: "videoowner",
+  //               pipeline: [
+  //                 {
+  //                   $project: {
+  //                     videoFile: 1,
+  //                     thumbnail: 1,
+  //                     title: 1,
+  //                     duration: 1,
+  //                   },
+  //                 },
+  //               ],
+  //             },
+  //           },
+  //         ],
+  //       },
+  //     },
+  //   ]);
+  //   console.log("Video", video);
+  //   // return res
+  //   //   .status(200)
+  //   //   .send({ data: channel[0], message: "user channel profile" });
+
+  //   // const channel = console.log("user from channel", user);
+  // }
+
+  try {
+    const id = req.params;
+
+    const video = await Video.findById({ _id: id.id });
+    const user = await User.findById({ _id: video.owner });
+
+    console.log("video", video);
+    console.log("user", user);
+
+    return res
+      .status(200)
+      .send({
+        data: [video, user],
+        message: "video with id succesfully fetched",
+      });
+  } catch (error) {
+    res.status(400).send({
+      data: null,
+      message: "somewthing went wrong while getting user channel profile",
+    });
+  }
+};
+
+export { uploadVideo, fetchVideos, fetchAllVideos, fetchVideoById };
