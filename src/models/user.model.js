@@ -64,6 +64,7 @@ userSchema.methods.passwordValidate = function (password) {
 };
 
 userSchema.methods.generateAccessToken = function () {
+  console.log("time", process.env.ACCESS_TOKEN_EXPIRY);
   return jwt.sign(
     {
       _id: this._id,
