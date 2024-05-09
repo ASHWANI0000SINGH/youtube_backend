@@ -7,6 +7,7 @@ const uploadVideo = async (req, res) => {
 	try {
 		const { thumbnail, title, videoFile, duration } = req.body;
 		const owner = req.user?._id;
+		console.log("req.file line no 10", req.file);
 		let videoLocalpath = req.file.path;
 		console.log("video local path", videoLocalpath);
 		const videoFileonCloudinary = await uploadOnCloudinary(videoLocalpath);
