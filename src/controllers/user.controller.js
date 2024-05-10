@@ -85,50 +85,91 @@ const generateAccessandRefreshToken = async (userId) => {
 // 	}
 // };
 
+// const registerUser = async (req, res) => {
+// 	try {
+// 		const { email, password } = req.body;
+// 		console.log("1", email, password);
+
+// 		// Check if email and password are provided
+// 		if (!email || !password) {
+// 			return res.status(400).json({
+// 				data: null,
+// 				message: "Please provide email and password",
+// 			});
+// 		}
+
+// 		// Check if user with the provided email already exists
+// 		const existedUser = await User.findOne({ email });
+// 		if (existedUser) {
+// 			return res.status(401).json({
+// 				data: null,
+// 				message: "User already registered",
+// 			});
+// 		}
+
+// 		// Create the user
+// 		console.log("2, checking here");
+
+// 		// const user = await User.create({ email, password });
+// 		const user = await User.create({ email, password });
+
+// 		console.log("3", user);
+
+// 		// Exclude sensitive information from the response
+// 		const createdUser = await User.findById(user?._id).select(
+// 			"-password -refreshToken"
+// 		);
+
+// 		console.log("3", createdUser);
+
+// 		if (!createdUser) {
+// 			return res.status(402).json({
+// 				data: null,
+// 				message: "Something went wrong while creating the user",
+// 			});
+// 		}
+
+// 		return res.status(200).json({
+// 			data: createdUser,
+// 			message: "User registered successfully",
+// 		});
+// 	} catch (error) {
+// 		return res.status(400).json({
+// 			data: null,
+// 			message: "Something went wrong while registering the user",
+// 		});
+// 	}
+// };
 const registerUser = async (req, res) => {
 	try {
-		const { email, password } = req.body;
-
-		// Check if email and password are provided
+		const { email, password, username } = req.body;
+		console.log("email n password", email, password, username);
 		if (!email || !password) {
-			return res.status(400).json({
-				data: null,
-				message: "Please provide email and password",
-			});
+			res
+				.status(401)
+				.send({ data: {}, message: "email and password is mandatory" });
 		}
 
-		// Check if user with the provided email already exists
-		const existedUser = await User.findOne({ email });
-		if (existedUser) {
-			return res.status(401).json({
-				data: null,
-				message: "User already registered",
-			});
+		// find the email in db
+		const user = await User.findOne({ email });
+		if (user) {
+			res
+				.status(401)
+				.send({ data: {}, message: "user already present in the database" });
 		}
 
-		// Create the user
-		const user = await User.create({ email, password });
+		//create the user
 
-		// Exclude sensitive information from the response
-		const createdUser = await User.findById(user._id).select(
-			"-password -refreshToken"
-		);
-		if (!createdUser) {
-			return res.status(402).json({
-				data: null,
-				message: "Something went wrong while creating the user",
-			});
-		}
+		const createdUser = await User.create({ username, email, password });
+		console.log("createduser", createdUser);
 
-		return res.status(200).json({
-			data: createdUser,
-			message: "User registered successfully",
-		});
+		return res
+			.status(200)
+			.send({ data: { createdUser }, message: "user created" });
 	} catch (error) {
-		return res.status(400).json({
-			data: null,
-			message: "Something went wrong while registering the user",
-		});
+		return res
+			.status(500)
+			.send("Internal Server Error while Creating the user");
 	}
 };
 
