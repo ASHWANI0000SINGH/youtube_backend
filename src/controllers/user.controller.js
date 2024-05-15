@@ -352,9 +352,9 @@ const getCurrentUser = async (req, res) => {
 };
 const updateAccoutDetails = async (req, res) => {
 	try {
-		const { username, email, fullName } = req.body;
+		const { username, email } = req.body;
 
-		if (!username && !email && !fullName) {
+		if (!username && !email) {
 			res.status(401).send({ data: {}, message: "no fields are updated" });
 		}
 
@@ -364,7 +364,6 @@ const updateAccoutDetails = async (req, res) => {
 				$set: {
 					email,
 					username,
-					fullName,
 				},
 			},
 			{
@@ -378,6 +377,31 @@ const updateAccoutDetails = async (req, res) => {
 		// if (email === user.email) {
 		//   return res.status(401).send({ message: "email is same" });
 		// }
+
+		return res
+			.status(200)
+			.send({ data: user, message: "details modified succesfully" });
+	} catch (error) {}
+};
+const updateFullName = async (req, res) => {
+	try {
+		const { fullName } = req.body;
+
+		if (!fullName) {
+			res.status(401).send({ data: {}, message: "no fields are updated" });
+		}
+
+		const user = await User.findByIdAndUpdate(
+			req.user?._id,
+			{
+				$set: {
+					fullName,
+				},
+			},
+			{
+				returnOriginal: false,
+			}
+		).select("-password -refreshToken");
 
 		return res
 			.status(200)
@@ -584,6 +608,7 @@ export {
 	changeCurrentPassword,
 	getCurrentUser,
 	updateAccoutDetails,
+	updateFullName,
 	updateUserAvatar,
 	updateCoverImage,
 	getUserChannelProfile,
