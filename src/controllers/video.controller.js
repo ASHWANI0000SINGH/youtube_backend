@@ -5,7 +5,7 @@ import { ObjectId } from "mongodb";
 
 const uploadVideo = async (req, res) => {
 	try {
-		const { thumbnail, title, videoFile, duration } = req.body;
+		const { title, videoFile, thumbnail } = req.body;
 		const owner = req.user?._id;
 		console.log("req.file line no 10", req.file);
 		let videoLocalpath = req.file.path;
@@ -19,7 +19,7 @@ const uploadVideo = async (req, res) => {
 			thumbnail,
 			title,
 			videoFile: videoFileonCloudinary?.url,
-			duration,
+			// duration,
 			owner,
 		});
 
