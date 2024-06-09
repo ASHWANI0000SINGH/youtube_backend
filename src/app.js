@@ -19,11 +19,16 @@ app.use(cookieParser());
 // routes import
 import userRouter from "./routes/user.route.js";
 import videoUpload from "./routes/videoUpload.route.js";
+import commentRouter from "./routes/comment.route.js";
+import likeRouter from "./routes/like.route.js";
+
 // import { imageUpload } from "./utils/fileupload.js";
 
 // routes declartaion
 app.use("/api/v1/users", userRouter);
 
 app.use("/api/v1/video", videoUpload);
+app.use("/api/v1/comments", commentRouter);
+app.use("/api/v1/likes", likeRouter);
 
 export default app;
