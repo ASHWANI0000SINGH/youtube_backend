@@ -1,25 +1,24 @@
 import { DisLike } from "../models/dislikeModel.js";
-import { Like } from "../models/likeModel.js";
 import { Video } from "../models/video.model.js";
 
-const getAllLikes = async (req, res) => {
+const getAllDisLikes = async (req, res) => {
 	try {
 		const { videoId } = req.params;
 		if (!videoId) {
 			res.status(401).send({ data: null, message: "Video ID not not given" });
 		}
 
-		const findVideoIdInLikes = await Like.find({ video: videoId });
+		const findVideoIdInLikes = await DisLike.find({ video: videoId });
 
 		return res.status(200).send({
 			data: findVideoIdInLikes,
-			message: "like fetched succesfully ",
+			message: "dislike fetched succesfully ",
 		});
 	} catch (error) {
-		console.error("Error fetching likes:", error);
+		console.error("Error fetching dislikes:", error);
 	}
 };
-const addLikes = async (req, res) => {
+const addDisLikes = async (req, res) => {
 	try {
 		//1. User Id who is watching video
 		//2. Video Id - which video is playing
@@ -39,35 +38,39 @@ const addLikes = async (req, res) => {
 		if (!findVideoId) {
 			res
 				.status(403)
-				.send({ data: null, message: "video is mot available in database " });
+				.send({ data: null, message: "video is not available in database " });
 		}
 		console.log("findvideo by id", findVideoId);
 
-		const userId = req.user._id;
+		const userId = req.user?._id;
 		if (!userId) {
-			res
-				.status(401)
-				.send({ data: null, message: "User ID not not available" });
+			res.status(401).send({ data: null, message: "User not logged In" });
 		}
 
-		const findUserAndVideoId = await Like.findOne({
-			likedBy: userId,
+		const findUserAndVideoId = await DisLike.findOne({
+			disLikedBy: userId,
 			video: videoId,
 		});
 		console.log("video and user available", findUserAndVideoId);
 		if (findUserAndVideoId) {
-			res
-				.status(402)
-				.send({ data: null, message: "video is already liked by the user " });
+			res.status(402).send({
+				data: null,
+				message: "video is already disliked by the user ",
+			});
 		}
 		if (findUserAndVideoId === null) {
-			const likeDbCall = await Like.create({ video: videoId, likedBy: userId });
-			console.log("likeDbCall", likeDbCall);
-			return res.status(200).send({ data: likeDbCall, message: "video liked" });
+			const dislikeDbCall = await DisLike.create({
+				video: videoId,
+				disLikedBy: userId,
+			});
+			console.log("dislikeDbCall", dislikeDbCall);
+			return res
+				.status(200)
+				.send({ data: dislikeDbCall, message: "video Disliked" });
 		}
 	} catch (error) {
 		console.error("Error while Liking Video:", error);
 	}
 };
 
-export { getAllLikes, addLikes };
+export { getAllDisLikes, addDisLikes };

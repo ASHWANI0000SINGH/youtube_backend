@@ -57,6 +57,21 @@ const deleteComment = async (req, res) => {
 		// console.log("comment", comment);
 		const { commentId } = req.params;
 
+		const userId = req.user._id;
+		const commnetedUserId = await Comment.findById({ _id: commentId });
+		console.log("commentedUserId", commnetedUserId);
+		console.log("commentedUserId", commnetedUserId.owner.toString());
+		console.log("userId", userId.toString());
+		console.log(
+			"id equal",
+			commnetedUserId.owner.toString() === userId.toString()
+		);
+		if (commnetedUserId.owner.toString() !== userId.toString()) {
+			res.status(403).send({
+				data: null,
+				message: "You can only delete your own comment",
+			});
+		}
 		const commentDeleted = await Comment.deleteOne({ _id: commentId });
 
 		return res
