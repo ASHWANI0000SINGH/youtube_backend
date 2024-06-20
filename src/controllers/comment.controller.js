@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { Comment } from "../models/comment.model.js";
 
 const getAllComments = async (req, res) => {
@@ -16,9 +17,41 @@ const getAllComments = async (req, res) => {
 
 		console.log(" 16 video id", videoId);
 		const getCommentsUsingVideoId = await Comment.find({ video: videoId });
-		console.log("getComments", getCommentsUsingVideoId);
+		// console.log("getComments", getCommentsUsingVideoId);
+		// const ObjectId = new mongoose.Types.ObjectId();
+
+		const commentAggregate = await Comment.aggregate([
+			{
+				$match: { video: new mongoose.Types.ObjectId(videoId) },
+			},
+			{
+				$lookup: {
+					from: "users",
+					localField: "owner",
+					foreignField: "_id",
+					as: "userDetails",
+					pipeline: [
+						{
+							$project: {
+								email: 1,
+								avatar: 1,
+								coverImage: 1,
+								username: 1,
+							},
+						},
+					],
+				},
+			},
+			{
+				$unwind: "$userDetails",
+			},
+			{ $sort: { createdAt: -1 } },
+		]);
+		console.log("commentAggregate", commentAggregate);
+		// console.log("getCommentsUsingVideoId", getCommentsUsingVideoId);
+
 		return res.status(200).send({
-			data: getCommentsUsingVideoId,
+			data: commentAggregate,
 			message: "comments succesfully ",
 		});
 	} catch (error) {

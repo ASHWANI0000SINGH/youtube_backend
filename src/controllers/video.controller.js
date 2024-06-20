@@ -92,97 +92,7 @@ const fetchUserVideos = async (req, res) => {
 		// res.status(400).json("server error while fetching video video", error);
 	}
 };
-// const fetchUserVideos = async (req, res) => {
-// 	const id = req.params;
 
-// 	const video = await Video.findById({ _id: id.id });
-// 	const user = await User.findById({ _id: video.owner });
-// 	console.log("user", user?._id);
-
-// 	try {
-// 		const video = await User.aggregate([
-// 			{
-// 				$match: {
-// 					_id: user?._id,
-// 				},
-// 			},
-// 			{
-// 				$lookup: {
-// 					from: "videos",
-// 					localField: "_id",
-// 					foreignField: "owner",
-// 					as: "allvideo",
-// 					pipeline: [
-// 						{
-// 							$project: {
-// 								fullName: 1,
-// 								username: 1,
-// 								avatar: 1,
-// 								videoFile: 1,
-// 								thumbnail: 1,
-// 								title: 1,
-// 								duration: 1,
-// 							},
-// 						},
-// 					],
-// 				},
-// 			},
-// 		]);
-// 		console.log("allVideos", video[0].allvideo);
-// 		return res
-// 			.status(200)
-// 			.send({ data: video[0].allvideo, message: "fetch video succesfully " });
-// 	} catch (error) {
-// 		console.error("Error fetching all videos for all users:", error);
-
-// 		// res.status(400).json("server error while fetching video video", error);
-// 	}
-// };
-
-// const fetchAllVideos = async (req, res) => {
-//   try {
-//     const allVideosForAllUsers = await Video.aggregate([
-//       {
-//         $lookup: {
-//           from: "users",
-//           localField: "owner",
-//           foreignField: "_id",
-//           // as: "users",
-//           as: "owner",
-
-//           pipeline: [
-//             {
-//               $lookup: {
-//                 from: "videos",
-//                 localField: "_id",
-//                 foreignField: "owner",
-//                 as: "videoowner",
-//                 pipeline: [
-//                   {
-//                     $project: {
-//                       videoFile: 1,
-//                       thumbnail: 1,
-//                       title: 1,
-//                       duration: 1,
-//                     },
-//                   },
-//                 ],
-//               },
-//             },
-//           ],
-//         },
-//       },
-//     ]);
-
-//     console.log("All videos for all users:", allVideosForAllUsers);
-//     return res.status(200).send({
-//       data: allVideosForAllUsers,
-//       message: "fetch video succesfully ",
-//     });
-//   } catch (error) {
-//     console.error("Error fetching all videos for all users:", error);
-//   }
-// };
 const fetchAllVideos = async (req, res) => {
 	try {
 		const allVideosForAllUsers = await Video.aggregate([
@@ -209,9 +119,10 @@ const fetchAllVideos = async (req, res) => {
 					],
 				},
 			},
+			{ $sort: { createdAt: -1 } },
 		]);
 
-		console.log("All videos for all users:", allVideosForAllUsers);
+		// console.log("All videos for all users:", allVideosForAllUsers);
 		return res.status(200).send({
 			data: allVideosForAllUsers,
 			message: "fetch video succesfully ",
