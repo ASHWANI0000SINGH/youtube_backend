@@ -90,17 +90,29 @@ const deleteComment = async (req, res) => {
 		// console.log("comment", comment);
 		const { commentId } = req.params;
 
-		const userId = req.user._id;
+		const userId = req.user?._id;
+		console.log("userId", userId);
+		console.log("commentId", commentId);
+
 		const commnetedUserId = await Comment.findById({ _id: commentId });
-		console.log("commentedUserId", commnetedUserId);
-		console.log("commentedUserId", commnetedUserId.owner.toString());
-		console.log("userId", userId.toString());
-		console.log(
-			"id equal",
-			commnetedUserId.owner.toString() === userId.toString()
-		);
+		console.log("commnetedUserId", commnetedUserId);
+
+		if (!commnetedUserId) {
+			return res.status(403).send({
+				data: null,
+				message: "You can only delete your own comment",
+			});
+		}
+
+		// console.log("commentedUserId", commnetedUserId);
+		// console.log("commentedUserId in string", commnetedUserId.owner.toString());
+		// console.log("userId", userId.toString());
+		// console.log(
+		// 	"id equal",
+		// 	commnetedUserId.owner.toString() === userId.toString()
+		// );
 		if (commnetedUserId.owner.toString() !== userId.toString()) {
-			res.status(403).send({
+			return res.status(403).send({
 				data: null,
 				message: "You can only delete your own comment",
 			});
@@ -115,32 +127,101 @@ const deleteComment = async (req, res) => {
 	}
 };
 
+// const editComment = async (req, res) => {
+// 	try {
+// 		//1 . we need video Id --thats where eevryone comments
+
+// 		// const { comment } = req.body;
+// 		// console.log("comment", comment);
+// 		const { commentId } = req.params;
+// 		const { comment } = req.body;
+
+// 		const userId = req.user?._id;
+// 		const commnetedUserId = await Comment.findById({ _id: commentId });
+// 		if (!commnetedUserId) {
+// 			res.status(403).send({
+// 				data: null,
+// 				message: "You can only edit your own comment",
+// 			});
+// 		}
+// 		if (commnetedUserId.owner.toString() !== userId.toString()) {
+// 			res.status(403).send({
+// 				data: null,
+// 				message: "You can only edit your own comment",
+// 			});
+// 		}
+
+// 		const EditedComment = await Comment.findByIdAndUpdate(
+// 			{ _id: commentId },
+// 			{
+// 				$set: {
+// 					comment,
+// 				},
+// 			},
+// 			{
+// 				returnOriginal: false,
+// 			}
+// 		);
+
+// 		return res
+// 			.status(200)
+// 			.send({ data: EditedComment, message: "comment succesfully edited" });
+// 	} catch (error) {
+// 		console.error("Error while deleting comment:", error);
+// 	}
+// };
+
 const editComment = async (req, res) => {
 	try {
-		//1 . we need video Id --thats where eevryone comments
-
-		// const { comment } = req.body;
-		// console.log("comment", comment);
 		const { commentId } = req.params;
 		const { comment } = req.body;
 
-		const EditedComment = await Comment.findByIdAndUpdate(
-			{ _id: commentId },
-			{
-				$set: {
-					comment,
-				},
-			},
-			{
-				returnOriginal: false,
-			}
+		const userId = req.user?._id;
+
+		// Find the comment by commentId
+		const commentedUser = await Comment.findById(commentId);
+
+		// Check if the comment exists
+		if (!commentedUser) {
+			return res.status(404).send({
+				data: null,
+				message: "Comment not found",
+			});
+		}
+
+		// Check if the user is authorized to edit the comment
+		if (commentedUser.owner.toString() !== userId.toString()) {
+			return res.status(403).send({
+				data: null,
+				message: "You can only edit your own comment",
+			});
+		}
+
+		// Update the comment
+		const editedComment = await Comment.findByIdAndUpdate(
+			commentId,
+			{ comment },
+			{ new: true } // Return the updated document
 		);
 
-		return res
-			.status(200)
-			.send({ data: EditedComment, message: "comment succesfully delted" });
+		if (!editedComment) {
+			return res.status(404).send({
+				data: null,
+				message: "Comment not found",
+			});
+		}
+
+		// Send success response
+		return res.status(200).send({
+			data: editedComment,
+			message: "Comment successfully edited",
+		});
 	} catch (error) {
-		console.error("Error while deleting comment:", error);
+		console.error("Error while editing comment:", error);
+		return res.status(500).send({
+			data: null,
+			message: "Failed to edit comment. Please try again later.",
+		});
 	}
 };
 
